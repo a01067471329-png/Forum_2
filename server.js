@@ -54,4 +54,6 @@ app.get("/list", async (request, response) => {
   // db_result는 array 형태로 DB에서 가져온 데이터를 담고 있다.
   console.log(db_result);
   response.render("list", { posts: db_result });
+
+  // new comment
 });
