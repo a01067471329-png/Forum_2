@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Forum</title>
+    <title><%= post.title %></title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -25,12 +25,8 @@
     </style>
   </head>
   <body>
-    <nav>
-      <a href="/">Home</a>
-      <a href="/shop">Shop</a>
-      <a href="/list">List</a>
-    </nav>
-    <h1>Forum</h1>
-    <p>Welcome to the forum.</p>
+    <%- include('nav') %>
+    <h1><%= post.title %></h1>
+    <p><%= post.content %></p>
   </body>
 </html>

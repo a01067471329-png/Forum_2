@@ -1,91 +1,177 @@
 <!doctype html>
 
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
 
-    <title>Post List</title>
+<meta charset="UTF-8" />
 
-    <style>
-      body {
-        font-family: Arial, sans-serif;
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        max-width: 900px;
+<title>Post List</title>
 
-        margin: 0 auto;
+<style>
 
-        padding: 20px;
+body {
+
+font-family: Arial, sans-serif;
+
+max-width: 900px;
+
+margin: 0 auto;
+
+padding: 20px;
+
       }
 
-      nav {
-        margin-bottom: 20px;
+nav {
+
+margin-bottom: 20px;
+
       }
 
-      nav a {
-        margin-right: 15px;
+nav a {
 
-        text-decoration: none;
+margin-right: 15px;
 
-        color: #333;
+text-decoration: none;
+
+color: #333;
+
       }
 
-      nav a:hover {
-        text-decoration: underline;
+nav a:hover {
+
+text-decoration: underline;
+
       }
 
-      .post {
-        border: 1px solid #ddd;
+.post {
 
-        border-radius: 4px;
+border: 1px solid #ddd;
 
-        padding: 15px;
+border-radius: 4px;
 
-        margin-bottom: 10px;
+padding: 15px;
+
+margin-bottom: 10px;
+
       }
 
-      .post h2 {
-        margin: 0 0 8px 0;
+.post h2 {
 
-        font-size: 1.1rem;
+margin: 0 0 8px 0;
+
+font-size: 1.1rem;
+
       }
 
-      .post p {
-        margin: 0;
+.post p {
 
-        color: #555;
+margin: 0;
+
+color: #555;
+
       }
-    </style>
-  </head>
 
-  <body>
-    <nav>
-      <a href="/">Home</a>
+.post:hover {
 
-      <a href="/shop">Shop</a>
+background-color: #f5f5f5;
 
-      <a href="/list">List</a>
-    </nav>
+border-color: #bbb;
 
-    <h1>Posts</h1>
+      }
 
-    <div class="post">
-      <h2><%= posts[0].title %></h2>
+.post-wrapper {
 
-      <p><%= posts[0].content %></p>
-    </div>
+display: flex;
 
-    <div class="post">
-      <h2><%= posts[1].title %></h2>
+align-items: stretch;
 
-      <p><%= posts[1].content %></p>
-    </div>
+margin-bottom: 10px;
 
-    <div class="post">
-      <h2><%= posts[2].title %></h2>
+      }
 
-      <p><%= posts[2].content %></p>
-    </div>
-  </body>
+.post-wrapper > a:first-child {
+
+flex: 1;
+
+      }
+
+.post-wrapper > a:first-child .post {
+
+margin-bottom: 0;
+
+      }
+
+.edit-btn {
+
+margin-left: 10px;
+
+padding: 15px 20px;
+
+font-size: 1rem;
+
+font-family: Arial, sans-serif;
+
+cursor: pointer;
+
+border: 1px solid #ddd;
+
+border-radius: 4px;
+
+background-color: #fff;
+
+color: #333;
+
+white-space: nowrap;
+
+      }
+
+.edit-btn:hover {
+
+background-color: #f5f5f5;
+
+border-color: #bbb;
+
+      }
+
+</style>
+
+</head>
+
+<body>
+
+<%- include('nav') %>
+
+<h1>Posts (<%= posts.length %>)</h1>
+
+<% for (let i = 0; i < posts.length; i++) { %>
+
+<div class="post-wrapper">
+
+<a href="/detail/<%= posts[i]._id %>" style="text-decoration:none; color:inherit;">
+
+<div class="post">
+
+<h2><%= posts[i].title %></h2>
+
+<p><%= posts[i].content %></p>
+
+</div>
+
+</a>
+
+<a href="/edit/<%= posts[i]._id %>">
+
+<button class="edit-btn">Edit</button>
+
+</a>
+
+</div>
+
+<% } %>
+
+</body>
+
 </html>
