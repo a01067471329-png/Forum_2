@@ -106,6 +106,18 @@ app.post("/edit/:id", async (request, response) => {
   }
 });
 
+app.delete("/post/:id", async (request, response) => {
+  try {
+    await db
+      .collection("post")
+      .deleteOne({ _id: new ObjectId(request.params.id) });
+    response.json({ ok: true });
+  } catch (err) {
+    console.log(err);
+    response.status(500).json({ ok: false });
+  }
+});
+
 // async: 비동기처리 함수로 만들어준다. DB에서 데이터를 가져오는 작업이 끝날 때까지 기다려야 하기 때문에 async 함수를 사용한다.
 app.get("/list", async (request, response) => {
   // await: 다음 줄을 처리하기 전에 기다린다. DB에서 데이터를 가져오는 작업이 끝날 때까지 기다린다.
