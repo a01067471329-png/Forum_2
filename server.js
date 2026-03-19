@@ -78,6 +78,34 @@ app.get("/detail/:id", async (request, response) => {
   }
 });
 
+app.get("/edit/:id", async (request, response) => {
+  try {
+    const post = await db
+      .collection("post")
+      .findOne({ _id: new ObjectId(request.params.id) });
+    if (!post) return response.status(404).send("Post not found.");
+    response.render("edit", { post });
+  } catch (err) {
+    console.log(err);
+    response.status(500).send("Failed to load post.");
+  }
+});
+
+app.post("/edit/:id", async (request, response) => {
+  try {
+    await db
+      .collection("post")
+      .updateOne(
+        { _id: new ObjectId(request.params.id) },
+        { $set: { title: request.body.title, content: request.body.content } },
+      );
+    response.redirect("/list");
+  } catch (err) {
+    console.log(err);
+    response.status(500).send("Failed to update post.");
+  }
+});
+
 // async: 비동기처리 함수로 만들어준다. DB에서 데이터를 가져오는 작업이 끝날 때까지 기다려야 하기 때문에 async 함수를 사용한다.
 app.get("/list", async (request, response) => {
   // await: 다음 줄을 처리하기 전에 기다린다. DB에서 데이터를 가져오는 작업이 끝날 때까지 기다린다.
