@@ -31,6 +31,38 @@ app.get("/", (request, response) => {
   response.sendFile(__dirname + "/index.html");
 });
 
+app.get("/login", (request, response) => {
+  response.render("login", { error: null });
+});
+
+app.post("/login", async (request, response) => {
+  try {
+    const user = await db
+      .collection("user")
+      .findOne({ username: request.body.username });
+    if (!user) {
+      return response.render("/login", {
+        error: "사용자 이름이 존재하지 않습니다.",
+      });
+    }
+    const isPasswordValid = await bcrypt.compare(
+      request.body.password,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      return response.render("/login", {
+        error: "비밀번호가 올바르지 않습니다.",
+      });
+    }
+
+    request.session.userId = user._id; // 로그인 성공 시 세션에 사용자 ID 저장
+    response.redirect("/list");
+  } catch (err) {
+    console.log(err);
+    response.render("login", { error: "로그인 실패." });
+  }
+});
+
 app.get("/register", (request, response) => {
   response.render("register", { error: null });
 });
