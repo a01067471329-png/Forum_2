@@ -1,6 +1,8 @@
 const express = require("express");
+const req = require("express/lib/request");
 const app = express();
 const { MongoClient, ObjectId } = require("mongodb");
+const bcrypt = require("bcrypt");
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -27,6 +29,34 @@ new MongoClient(url)
 // 누군가가 메인페이지를 요청했을 때 "hello world" 라는 문자열로 응답해준다.
 app.get("/", (request, response) => {
   response.sendFile(__dirname + "/index.html");
+});
+
+app.get("/register", (request, response) => {
+  response.render("register", { error: null });
+});
+
+app.post("/register", async (request, response) => {
+  try {
+    const existingUser = await db
+      .collection("user")
+      .findOne({ username: request.body.username });
+
+    if (existingUser) {
+      return response.render("register", {
+        error: "이미 사용 중인 아이디입니다.",
+      });
+    }
+
+    const hash = await bcrypt.hash(request.body.password, 10);
+    await db.collection("user").insertOne({
+      username: request.body.username,
+      password: hash,
+    });
+    response.redirect("/list");
+  } catch (err) {
+    console.log(err);
+    response.render("register", { error: "Registration failed." });
+  }
 });
 
 app.get("/shop", (request, response) => {
