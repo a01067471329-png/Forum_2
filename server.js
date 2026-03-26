@@ -1,12 +1,47 @@
 const express = require("express");
-const req = require("express/lib/request");
+const request = require("express/lib/request");
 const app = express();
 const { MongoClient, ObjectId } = require("mongodb");
+const session = require("express-session");
 const bcrypt = require("bcrypt");
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  // secret: 세션 쿠키를 암호화할 때 사용하는 문자열
+  // resave: 세션이 변경되지 않아도 매 요청마다 세션을 저장할지 여부
+  // saveUninitialized: 초기화되지 않은 세션을 저장할지 여부 (로그인한 사람의 세션만 저장하기 위해 false로 설정)
+  // cookie: 세션 쿠키의 설정, maxAge는 쿠키의 유효 기간을 밀리초 단위로 설정한다. 설정 안하면 브라우저 종료할 때까지 유지
+  session({
+    secret: "forum-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  }),
+);
+// 모든 페이지에서 로그인한 사용자 정보를 사용할 수 있도록 설정한다.
+// 요청 들어온 후 실행되어 ejs 템플릿이 렌더링되기 전에 실행된다.
+app.use(async (request, response, next) => {
+  if (request.session.userId) {
+    try {
+      // request.user: 로그인한 사용자 정보를 담는 객체
+      // request.session.userId: 쿠키에 저장된 사용자 ID. 이 ID를 사용하여 DB에서 사용자 정보를 가져온다.
+      request.user = await db
+        .collection("user")
+        .findOne({ _id: new ObjectId(request.session.userId) });
+    } catch {
+      request.user = null;
+    }
+  } else {
+    request.user = null;
+  }
+  // response.locals: ejs에서 사용할 수 있는 변수들을 담아놓는 객체
+  response.locals.user = request.user;
+  next();
+});
 
 // 서버와 DB가 통신하는 방법
 let db;
@@ -25,6 +60,14 @@ new MongoClient(url)
   .catch((err) => {
     console.log(err);
   });
+
+// 로그인 여부를 확인하는 미들웨어 함수, next: 다음 함수로 넘어가는 함수
+// 로그인되어 있으면 다음 함수로 넘어가고, 로그인되어 있지 않으면 로그인 페이지로 리다이렉트한다.
+function isLoggedIn(request, response, next) {
+  // request.user: 로그인한 사용자 정보가 담긴 객체, 로그인되어 있지 않으면 null
+  if (request.user) return next();
+  response.redirect("/login");
+}
 
 // 누군가가 메인페이지를 요청했을 때 "hello world" 라는 문자열로 응답해준다.
 app.get("/", (request, response) => {
@@ -91,6 +134,13 @@ app.post("/register", async (request, response) => {
   }
 });
 
+app.post("/logout", (request, response, next) => {
+  request.session.destroy((err) => {
+    if (err) return next(err);
+    response.redirect("/login");
+  });
+});
+
 app.get("/shop", (request, response) => {
   // db.collection("post").insertOne(
   //   { name: "홍길동", age: 20, _id: 100 },
@@ -107,15 +157,16 @@ app.get("/shop", (request, response) => {
   }
 });
 
-app.get("/write", (request, response) => {
+app.get("/write", isLoggedIn, (request, response) => {
   response.render("write");
 });
 
-app.post("/write", async (request, response) => {
+app.post("/write", isLoggedIn, async (request, response) => {
   try {
     await db.collection("post").insertOne({
       title: request.body.title,
       content: request.body.content,
+      author: request.user.username,
     });
     response.redirect("/list");
   } catch (err) {
@@ -140,7 +191,7 @@ app.get("/detail/:id", async (request, response) => {
   }
 });
 
-app.get("/edit/:id", async (request, response) => {
+app.get("/edit/:id", isLoggedIn, async (request, response) => {
   try {
     const post = await db
       .collection("post")
@@ -153,7 +204,7 @@ app.get("/edit/:id", async (request, response) => {
   }
 });
 
-app.post("/edit/:id", async (request, response) => {
+app.post("/edit/:id", isLoggedIn, async (request, response) => {
   try {
     await db
       .collection("post")
@@ -168,7 +219,7 @@ app.post("/edit/:id", async (request, response) => {
   }
 });
 
-app.delete("/post/:id", async (request, response) => {
+app.delete("/post/:id", isLoggedIn, async (request, response) => {
   try {
     await db
       .collection("post")
