@@ -4,10 +4,44 @@ const app = express();
 const { MongoClient, ObjectId } = require("mongodb");
 const session = require("express-session");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const multerS3 = require("multer-s3");
+const { S3Client } = require("@aws-sdk/client-s3");
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
+
+require("dotenv").config();
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+const upload = multer({
+  storage: multerS3({
+    s3,
+    bucket: process.env.AWS_S3_BUCKET,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, callback) => {
+      const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = file.originalname.split(".").pop();
+      callback(null, "posts/" + unique + "." + ext);
+    },
+  }),
+  fileFilter: (req, file, callback) => {
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    allowed.includes(file.mimetype)
+      ? callback(null, true)
+      : callback(new Error("Images only."));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
 app.use(
   // secret: 세션 쿠키를 암호화할 때 사용하는 문자열
   // resave: 세션이 변경되지 않아도 매 요청마다 세션을 저장할지 여부
@@ -45,8 +79,7 @@ app.use(async (request, response, next) => {
 
 // 서버와 DB가 통신하는 방법
 let db;
-const url =
-  "mongodb+srv://a01067471329_db_user:Z3iSfVDAEZ7pGSK5@cluster0.t759otx.mongodb.net/?appName=Cluster0";
+const url = process.env.DB_URL;
 new MongoClient(url)
   .connect()
   .then((client) => {
@@ -161,19 +194,27 @@ app.get("/write", isLoggedIn, (request, response) => {
   response.render("write");
 });
 
-app.post("/write", isLoggedIn, async (request, response) => {
-  try {
-    await db.collection("post").insertOne({
-      title: request.body.title,
-      content: request.body.content,
-      author: request.user.username,
-    });
-    response.redirect("/list");
-  } catch (err) {
-    console.log(err);
-    response.status(500).send("Failed to save post.");
-  }
-});
+app.post(
+  "/write",
+  isLoggedIn,
+  upload.single("image"),
+  async (request, response) => {
+    try {
+      console.log("Received post data:", request.file);
+      const imageUrl = request.file ? request.file.location : null;
+      await db.collection("post").insertOne({
+        title: request.body.title,
+        content: request.body.content,
+        author: request.user.username,
+        imageUrl,
+      });
+      response.redirect("/list");
+    } catch (err) {
+      console.log(err);
+      response.status(500).send("Failed to save post.");
+    }
+  },
+);
 
 app.get("/detail/:id", async (request, response) => {
   try {
