@@ -221,14 +221,32 @@ app.get("/detail/:id", async (request, response) => {
     const post = await db
       .collection("post")
       .findOne({ _id: new ObjectId(request.params.id) });
-
     if (!post) return response.status(404).send("Post not found.");
-
-    response.render("detail", { post });
+    const comments = await db
+      .collection("comment")
+      .find({ postId: new ObjectId(request.params.id) })
+      .sort({ createdAt: 1 })
+      .toArray();
+    response.render("detail", { post, comments });
   } catch (err) {
     console.log(err);
 
     response.status(500).send("Failed to load post.");
+  }
+});
+
+app.post("/comment/:postId", isLoggedIn, async (request, response) => {
+  try {
+    await db.collection("comment").insertOne({
+      postId: new ObjectId(request.params.postId),
+      author: request.user.username,
+      content: request.body.content,
+      createdAt: new Date(),
+    });
+    response.redirect("/detail/" + request.params.postId);
+  } catch (err) {
+    console.log(err);
+    response.status(500).send("Failed to post comment.");
   }
 });
 

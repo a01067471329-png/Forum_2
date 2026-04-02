@@ -1,32 +1,152 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%= post.title %></title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      nav {
-        margin-bottom: 20px;
-      }
-      nav a {
-        margin-right: 15px;
-        text-decoration: none;
-        color: #333;
-      }
-      nav a:hover {
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body>
 
-    <%- include('nav') %>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title><%= post.title %></title>
+
+<style>
+
+body {
+
+font-family: Arial, sans-serif;
+
+max-width: 900px;
+
+margin: 0 auto;
+
+padding: 20px;
+
+      }
+
+nav {
+
+margin-bottom: 20px;
+
+      }
+
+nav a {
+
+margin-right: 15px;
+
+text-decoration: none;
+
+color: #333;
+
+      }
+
+nav a:hover {
+
+text-decoration: underline;
+
+      }
+
+.comments-section {
+
+margin-top: 40px;
+
+border-top: 1px solid #ddd;
+
+padding-top: 20px;
+
+      }
+
+.comments-section h2 {
+
+font-size: 1.1rem;
+
+margin-bottom: 16px;
+
+      }
+
+.comment {
+
+border-bottom: 1px solid #eee;
+
+padding: 10px 0;
+
+      }
+
+.comment-author {
+
+font-weight: bold;
+
+font-size: 0.85rem;
+
+      }
+
+.comment-date {
+
+font-size: 0.75rem;
+
+color: #aaa;
+
+margin-left: 8px;
+
+      }
+
+.comment-content {
+
+margin-top: 4px;
+
+      }
+
+.comment-form textarea {
+
+width: 100%;
+
+height: 70px;
+
+padding: 8px;
+
+box-sizing: border-box;
+
+resize: vertical;
+
+border: 1px solid #ccc;
+
+border-radius: 4px;
+
+font-size: 0.9rem;
+
+      }
+
+.comment-form button {
+
+margin-top: 8px;
+
+padding: 6px 16px;
+
+background: #333;
+
+color: #fff;
+
+border: none;
+
+border-radius: 4px;
+
+cursor: pointer;
+
+      }
+
+.comment-form button:hover {
+
+background: #555;
+
+      }
+
+</style>
+
+</head>
+
+<body>
+
+<%- include('nav') %>
 
 <h1><%= post.title %></h1>
 
@@ -48,5 +168,46 @@ style="max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 6
 
 <p><%= post.content %></p>
 
+<div class="comments-section">
+
+<h2>댓글 <%= comments.length %>개</h2>
+
+<% comments.forEach(comment => { %>
+
+<div class="comment">
+
+<span class="comment-author"><%= comment.author %></span>
+
+<span class="comment-date"><%= comment.createdAt.toLocaleDateString('ko-KR') %></span>
+
+<p class="comment-content"><%= comment.content %></p>
+
+</div>
+
+<% }) %>
+
+<% if (user) { %>
+
+<form class="comment-form" action="/comment/<%= post._id %>" method="POST" style="margin-top: 16px;">
+
+<textarea name="content" placeholder="댓글을 입력하세요" required></textarea>
+
+<button type="submit">댓글 등록</button>
+
+</form>
+
+<% } else { %>
+
+<p style="margin-top: 16px; font-size: 0.9rem; color: #888">
+
+<a href="/login">로그인</a>하면 댓글을 달 수 있습니다.
+
+</p>
+
+<% } %>
+
+</div>
+
 </body>
+
 </html>
