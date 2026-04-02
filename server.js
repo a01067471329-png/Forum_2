@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const { S3Client } = require("@aws-sdk/client-s3");
+const req = require("express/lib/request");
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -288,6 +289,29 @@ app.delete("/post/:id", isLoggedIn, async (request, response) => {
     console.log(err);
     response.status(500).json({ ok: false });
   }
+});
+
+app.get("/chat", (request, response) => {
+  response.render("chat");
+});
+
+app.get("/chat/messages", async (request, response) => {
+  const messages = await db
+    .collection("chat")
+    .find()
+    .sort({ createdAt: 1 })
+    .limit(100)
+    .toArray();
+  response.json(messages);
+});
+
+app.post("/chat/send", isLoggedIn, async (request, response) => {
+  await db.collection("chat").insertOne({
+    username: request.user.username,
+    text: request.body.text,
+    createdAt: new Date(),
+  });
+  response.json({ ok: true });
 });
 
 // async: 비동기처리 함수로 만들어준다. DB에서 데이터를 가져오는 작업이 끝날 때까지 기다려야 하기 때문에 async 함수를 사용한다.
